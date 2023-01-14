@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class RegisterViewController: UIViewController, UINavigationControllerDelegate {
     
@@ -169,13 +170,24 @@ class RegisterViewController: UIViewController, UINavigationControllerDelegate {
               !firstName.isEmpty,
               !lastName.isEmpty,
               !email.isEmpty,
-              !password.isEmpty,
-              password.count >= 6 else {
+              !password.isEmpty else {
             alertUserRegisterError()
             return
         }
         
         //Firebase Log In
+        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+            if let e = error {
+                print(e.localizedDescription)
+                let alertContoller = UIAlertController (title: "Error" , message: e.localizedDescription , preferredStyle:UIAlertController.Style.alert)
+                alertContoller.addAction(UIAlertAction(title: "OK", style:UIAlertAction.Style.default , handler: nil))
+                self.present(alertContoller, animated: true)
+
+            } else {
+//                self.performSegue(withIdentifier: Constants.registerSegue, sender: self)
+                print(email)
+            }
+        }
     }
     
     func alertUserRegisterError() {
