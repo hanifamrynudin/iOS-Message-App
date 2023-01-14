@@ -102,6 +102,8 @@ class RegisterViewController: UIViewController, UINavigationControllerDelegate {
         view.backgroundColor = .systemBackground
         navigationController?.setNavigationBarHidden(false, animated: true)
         
+        firstNameField.delegate = self
+        lastNameField.delegate = self
         emailField.delegate = self
         passwordField.delegate = self
         registerButton.addTarget(self,
