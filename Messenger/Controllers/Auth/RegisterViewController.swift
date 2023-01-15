@@ -177,24 +177,40 @@ class RegisterViewController: UIViewController, UINavigationControllerDelegate {
             return
         }
         
-        //Firebase Log In
-        Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
-            if let e = error {
-                print(e.localizedDescription)
-                let alertContoller = UIAlertController (title: "Error" , message: e.localizedDescription , preferredStyle:UIAlertController.Style.alert)
-                alertContoller.addAction(UIAlertAction(title: "OK", style:UIAlertAction.Style.default , handler: nil))
-                self.present(alertContoller, animated: true)
-
-            } else {
-//                self.performSegue(withIdentifier: Constants.registerSegue, sender: self)
-                print(email)
+        //Firebase Register
+        
+        DatabaseManager.shared.userExists(with: email, completion: { [weak self] exists in
+            guard let strongSelf = self else {
+                return
             }
-        }
+            
+            guard !exists else {
+                //User already exists
+                strongSelf.alertUserRegisterError(message: "Looks like a user account for that email already exists.")
+                return
+            }
+            
+            Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+                guard let strongSelf = self else {
+                    return
+                }
+                
+                if let e = error {
+                    print(e.localizedDescription)
+                    let alertContoller = UIAlertController (title: "Error" , message: e.localizedDescription , preferredStyle:UIAlertController.Style.alert)
+                    alertContoller.addAction(UIAlertAction(title: "OK", style:UIAlertAction.Style.default , handler: nil))
+                    self!.present(alertContoller, animated: true)
+                } else {
+                    DatabaseManager.shared.insertUser(with: chatAppUser(firstName: firstName, lastName: lastName, emailAddress: email))
+                    strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+                }
+            }
+        })
     }
     
-    func alertUserRegisterError() {
+    func alertUserRegisterError(message: String = "Please enter all information to create a new account") {
         let alert = UIAlertController(title: "Woops",
-                                      message: "Please enter all information to create a new account",
+                                      message: message,
                                       preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: nil))
         present(alert, animated: true)

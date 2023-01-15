@@ -124,6 +124,10 @@ class LoginViewController: UIViewController {
         
         //Firebase Log In
         Auth.auth().signIn(withEmail: email, password: password){ [weak self] authResult, error in
+            guard let strongSelf = self else {
+                return
+            }
+            
             if let e = error {
                 print(e.localizedDescription)
                 let alertContoller = UIAlertController (title: e.localizedDescription, message: "" , preferredStyle:UIAlertController.Style.alert)
@@ -132,7 +136,7 @@ class LoginViewController: UIViewController {
             } else {
                 let user = authResult?.user
                 print("LogedIn: \(user!)")
-//                self?.performSegue(withIdentifier: Constants.loginSegue, sender: self)
+                strongSelf.navigationController?.dismiss(animated: true, completion: nil)
             }
         }
     }
