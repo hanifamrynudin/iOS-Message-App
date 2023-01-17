@@ -208,17 +208,16 @@ extension LoginViewController: LoginButtonDelegate {
                 return
             }
             
-//            let nameComponents = userName.components(separatedBy: " ")
-//            guard nameComponents.count == 2 else {
-//                return
-//            }
-//
-//            let firstName = nameComponents[0]
-//            let lastName = nameComponents[1]
+            let nameComponents = userName.components(separatedBy: " ")
+            let getForFirstName = nameComponents.dropLast()
+            
+            let firstName = getForFirstName.joined(separator: " ")
+            let lastName = nameComponents.last
+            
             
             DatabaseManager.shared.userExists(with: email, completion: {exist in
                 if !exist {
-                    DatabaseManager.shared.insertUser(with: chatAppUser(firstName: userName, lastName: userName, emailAddress: email))
+                    DatabaseManager.shared.insertUser(with: chatAppUser(firstName: firstName, lastName: lastName!, emailAddress: email))
                 }
             })
             
