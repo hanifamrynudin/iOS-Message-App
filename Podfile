@@ -9,5 +9,6 @@ pod 'Firebase/Auth'
 pod 'Firebase/Database'
 pod 'IQKeyboardManagerSwift', '6.3.0'
 pod 'FBSDKLoginKit'
+pod 'GoogleSignIn'
 
 end

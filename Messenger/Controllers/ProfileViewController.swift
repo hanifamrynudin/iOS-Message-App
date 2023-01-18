@@ -61,6 +61,14 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
                 print("Error signing out: %@", signOutError)
             }
             
+            //Log Out Google
+            let firebaseAuth = Auth.auth()
+            do {
+                try firebaseAuth.signOut()
+            } catch let signOutError as NSError {
+                print("Error signing out: %@", signOutError)
+            }
+            
         }))
         
         actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))

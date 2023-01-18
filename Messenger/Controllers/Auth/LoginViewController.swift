@@ -8,6 +8,8 @@
 import UIKit
 import FirebaseAuth
 import FBSDKLoginKit
+import GoogleSignIn
+import Firebase
 
 class LoginViewController: UIViewController {
     
@@ -73,6 +75,11 @@ class LoginViewController: UIViewController {
         
     }()
     
+    private let googleSignInButton: GIDSignInButton = {
+        let button = GIDSignInButton()
+        return button
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -91,6 +98,10 @@ class LoginViewController: UIViewController {
                               action: #selector(loginButtonTapped),
                               for: .touchUpInside)
         
+        googleSignInButton.addTarget(self,
+                                     action: #selector(signinButtonTapped),
+                                     for: .touchUpInside)
+        
         //Add Sub View
         view.addSubview(scrollView)
         scrollView.addSubview(imageView)
@@ -98,6 +109,7 @@ class LoginViewController: UIViewController {
         scrollView.addSubview(passwordField)
         scrollView.addSubview(loginButton)
         scrollView.addSubview(fbLoginButton)
+        scrollView.addSubview(googleSignInButton)
     }
     
     override func viewDidLayoutSubviews() {
@@ -129,6 +141,74 @@ class LoginViewController: UIViewController {
                                      y: imageView.bottom+226,
                                      width: scrollView.width-60,
                                      height: 52)
+        
+        googleSignInButton.frame = CGRect(x: 30,
+                                     y: imageView.bottom+298,
+                                     width: scrollView.width-60,
+                                     height: 52)
+    }
+    
+    @objc private func signinButtonTapped() {
+        guard let clientID = FirebaseApp.app()?.options.clientID else { return }
+        
+        // Create Google Sign In configuration object.
+        let config = GIDConfiguration(clientID: clientID)
+
+        GIDSignIn.sharedInstance.configuration = config
+        
+        // Start the sign in flow!
+        GIDSignIn.sharedInstance.signIn(withPresenting: self) { user, error in
+            
+            if let error = error {
+                print(error)
+                return
+            }
+            
+            guard
+                let authentication = user?.user,
+                let idToken = authentication.idToken?.tokenString
+            else {
+                return
+            }
+            
+            var getLastName: String? = user?.user.profile?.familyName
+            
+            if getLastName == nil {
+                getLastName = " "
+            }
+            
+            guard let email = user?.user.profile?.email,
+                  let firstName = user?.user.profile?.givenName,
+                  let lastName = getLastName else {
+                return
+            }
+            
+            DatabaseManager.shared.userExists(with: email, completion: {exist in
+                if !exist {
+                    DatabaseManager.shared.insertUser(with: chatAppUser(firstName: firstName, lastName: lastName, emailAddress: email))
+                }
+            })
+            
+            let credential = GoogleAuthProvider.credential(withIDToken: idToken,
+                                                           accessToken: authentication.accessToken.tokenString)
+            
+            FirebaseAuth.Auth.auth().signIn(with: credential, completion: { [weak self] authResult, error in
+                
+                guard let strongSelf = self else {
+                    return
+                }
+                
+                guard authResult != nil, error == nil else {
+                    if let error = error {
+                        print("Google credential login failed, MFA may be needed \(error)")
+                    }
+                    return
+                }
+                
+                print("Successfully logged user in")
+                strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+            })
+        }
     }
     
     @objc private func loginButtonTapped() {
