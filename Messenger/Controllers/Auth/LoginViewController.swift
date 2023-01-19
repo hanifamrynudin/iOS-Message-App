@@ -21,7 +21,7 @@ class LoginViewController: UIViewController {
     
     private let imageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(named: "logo")
+        imageView.image = UIImage(named: "Logo")
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
@@ -68,15 +68,25 @@ class LoginViewController: UIViewController {
         return button
     }()
     
-    private let fbLoginButton: FBLoginButton = {
-        let button = FBLoginButton()
-        button.permissions = ["public_profile", "email"]
+    private let googleSignInButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "SignIn"), for: .normal)
+        button.layer.shadowOpacity = 0.3
+        button.layer.shadowRadius = 2.0
+        button.layer.shadowOffset = CGSize(width: 1.5, height: 1.5)
+        button.layer.shadowColor = UIColor.gray.cgColor
+        button.layer.cornerRadius = 12
         return button
-        
     }()
     
-    private let googleSignInButton: GIDSignInButton = {
-        let button = GIDSignInButton()
+    private let fbLoginButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "FbLogIn"), for: .normal)
+        button.layer.shadowOpacity = 0.3
+        button.layer.shadowRadius = 2.0
+        button.layer.shadowOffset = CGSize(width: 1.5, height: 1.5)
+        button.layer.shadowColor = UIColor.gray.cgColor
+        button.layer.cornerRadius = 12
         return button
     }()
     
@@ -92,7 +102,6 @@ class LoginViewController: UIViewController {
         
         emailField.delegate = self
         passwordField.delegate = self
-        fbLoginButton.delegate = self
         
         loginButton.addTarget(self,
                               action: #selector(loginButtonTapped),
@@ -101,6 +110,10 @@ class LoginViewController: UIViewController {
         googleSignInButton.addTarget(self,
                                      action: #selector(signinButtonTapped),
                                      for: .touchUpInside)
+        
+        fbLoginButton.addTarget(self,
+                                      action: #selector(fbButtonTapped),
+                                      for: .touchUpInside)
         
         //Add Sub View
         view.addSubview(scrollView)
@@ -143,17 +156,61 @@ class LoginViewController: UIViewController {
                                      height: 52)
         
         googleSignInButton.frame = CGRect(x: 30,
-                                     y: imageView.bottom+298,
-                                     width: scrollView.width-60,
-                                     height: 52)
+                                          y: imageView.bottom+298,
+                                          width: scrollView.width-60,
+                                          height: 52)
     }
+    
+    //MARK: - Register
+    
+    @objc private func didTapRegister() {
+        let vc = RegisterViewController()
+        vc.title = "Create New Account"
+        navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    //MARK: - Login with Email
+    
+    @objc private func loginButtonTapped() {
+        guard let email = emailField.text, let password = passwordField.text,
+              !email.isEmpty, !password.isEmpty else {
+            alertUserLoginError()
+            return
+        }
+        
+        //Firebase Log In
+        Auth.auth().signIn(withEmail: email, password: password){ [weak self] authResult, error in
+            guard let strongSelf = self else {
+                return
+            }
+            
+            if let e = error {
+                print(e.localizedDescription)
+                let alertContoller = UIAlertController (title: e.localizedDescription, message: "" , preferredStyle:UIAlertController.Style.alert)
+                alertContoller.addAction(UIAlertAction(title: "OK", style:UIAlertAction.Style.default , handler: nil))
+                self?.present(alertContoller, animated: true)
+            } else {
+                strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+            }
+        }
+    }
+    
+    func alertUserLoginError() {
+        let alert = UIAlertController(title: "Woops",
+                                      message: "Please enter all information to Log in.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: nil))
+        present(alert, animated: true)
+    }
+    
+    //MARK: - SignIn with Google
     
     @objc private func signinButtonTapped() {
         guard let clientID = FirebaseApp.app()?.options.clientID else { return }
         
         // Create Google Sign In configuration object.
         let config = GIDConfiguration(clientID: clientID)
-
+        
         GIDSignIn.sharedInstance.configuration = config
         
         // Start the sign in flow!
@@ -211,46 +268,71 @@ class LoginViewController: UIViewController {
         }
     }
     
-    @objc private func loginButtonTapped() {
-        guard let email = emailField.text, let password = passwordField.text,
-              !email.isEmpty, !password.isEmpty else {
-            alertUserLoginError()
-            return
-        }
+    //MARK: - Continue with Facebook
+    
+    @objc private func fbButtonTapped() {
+        let loginManager = LoginManager()
         
-        //Firebase Log In
-        Auth.auth().signIn(withEmail: email, password: password){ [weak self] authResult, error in
-            guard let strongSelf = self else {
+        loginManager.logIn(permissions:  ["public_profile", "email"], from: self) { result, error in
+            guard let token = result?.token?.tokenString else {
+                print("User failed to log in with facebook")
                 return
             }
             
-            if let e = error {
-                print(e.localizedDescription)
-                let alertContoller = UIAlertController (title: e.localizedDescription, message: "" , preferredStyle:UIAlertController.Style.alert)
-                alertContoller.addAction(UIAlertAction(title: "OK", style:UIAlertAction.Style.default , handler: nil))
-                self?.present(alertContoller, animated: true)
-            } else {
-                strongSelf.navigationController?.dismiss(animated: true, completion: nil)
-            }
+            let facebookRequest = FBSDKLoginKit.GraphRequest(graphPath: "me", parameters: ["fields": "email, name"], tokenString: token, version: nil ,httpMethod: .get)
+            
+            facebookRequest.start(completion: {_, result, error in
+                guard let result = result as? [String: Any], error == nil else {
+                    print("Failed to make facebook graph request")
+                    return
+                }
+                
+                print("\(result)")
+                guard let userName = result["name"] as? String,
+                      let email = result["email"] as? String else {
+                    print("Failed to get email and name from fb result")
+                    return
+                }
+                
+                let nameComponents = userName.components(separatedBy: " ")
+                let getForFirstName = nameComponents.dropLast()
+                
+                let firstName = getForFirstName.joined(separator: " ")
+                let lastName = nameComponents.last
+                
+                
+                DatabaseManager.shared.userExists(with: email, completion: {exist in
+                    if !exist {
+                        DatabaseManager.shared.insertUser(with: chatAppUser(firstName: firstName, lastName: lastName!, emailAddress: email))
+                    }
+                })
+                
+                let credential = FacebookAuthProvider.credential(withAccessToken: token)
+                
+                FirebaseAuth.Auth.auth().signIn(with: credential, completion: { [weak self] authResult, error in
+                    
+                    guard let strongSelf = self else {
+                        return
+                    }
+                    
+                    guard authResult != nil, error == nil else {
+                        if let error = error {
+                            print("Facebook credential login failed, MFA may be needed \(error)")
+                        }
+                        return
+                    }
+                    
+                    print("Successfully logged user in")
+                    strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+                })
+            })
+            
         }
     }
-    
-    func alertUserLoginError() {
-        let alert = UIAlertController(title: "Woops",
-                                      message: "Please enter all information to Log in.",
-                                      preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Dismiss", style: .cancel, handler: nil))
-        present(alert, animated: true)
-    }
-    
-    @objc private func didTapRegister() {
-        let vc = RegisterViewController()
-        vc.title = "Create New Account"
-        navigationController?.pushViewController(vc, animated: true)
-    }
-    
 }
 
+
+//MARK: - Focus Textfield
 extension LoginViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField == emailField {
@@ -262,6 +344,7 @@ extension LoginViewController: UITextFieldDelegate {
     }
 }
 
+//MARK: - Facbook Login
 extension LoginViewController: LoginButtonDelegate {
     func loginButtonDidLogOut(_ loginButton: FBSDKLoginKit.FBLoginButton) {
         // no operation
