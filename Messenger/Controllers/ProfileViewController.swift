@@ -8,12 +8,14 @@
 import UIKit
 import FirebaseAuth
 import FBSDKLoginKit
+import JGProgressHUD
 
 class ProfileViewController: UIViewController {
     
     @IBOutlet var tableView: UITableView!
     
     let data = ["Log Out"]
+    private let spinner = JGProgressHUD(style: .dark)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,39 +43,32 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let actionSheet = UIAlertController(title: "", message: "", preferredStyle: .actionSheet)
+        let actionSheet = UIAlertController(title: "Are you sure to Log Out?", message: "", preferredStyle: .actionSheet)
+        
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(actionSheet, animated: true)
+        
         actionSheet.addAction(UIAlertAction(title: "Log Out", style: .destructive, handler: { [weak self] _ in
             
             guard let strongSelf = self else {
                 return
             }
             
-            //Log Out Facebook
-            FBSDKLoginKit.LoginManager().logOut()
-            
             do {
                 try Auth.auth().signOut()
                 let vc = LoginViewController()
                 let nav = UINavigationController(rootViewController: vc)
                 nav.modalPresentationStyle = .fullScreen
-                strongSelf.present(nav, animated: true)
+                strongSelf.spinner.show(in: strongSelf.view)
+                DispatchQueue.main.async {
+                    strongSelf.spinner.dismiss()
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now()+1.0) {
+                    strongSelf.present(nav, animated: true)
+                }
             } catch let signOutError as NSError {
                 print("Error signing out: %@", signOutError)
             }
-            
-            //Log Out Google
-            let firebaseAuth = Auth.auth()
-            do {
-                try firebaseAuth.signOut()
-            } catch let signOutError as NSError {
-                print("Error signing out: %@", signOutError)
-            }
-            
         }))
-        
-        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
-        present(actionSheet, animated: true)
     }
-    
-    
 }
