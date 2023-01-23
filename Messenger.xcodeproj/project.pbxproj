@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2B2D26F3297DF85000FEFA31 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B2D26F2297DF85000FEFA31 /* StorageManager.swift */; };
 		2B70CBBA2973D78100818C0B /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B70CBB92973D78100818C0B /* DatabaseManager.swift */; };
 		2B91EFA3297A93C800E2CE40 /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B91EFA2297A93C800E2CE40 /* ChatViewController.swift */; };
 		2B9AE97F2970C7EB00C2CDF4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B9AE97E2970C7EB00C2CDF4 /* AppDelegate.swift */; };
@@ -27,6 +28,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2B2D26F2297DF85000FEFA31 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		2B70CBB92973D78100818C0B /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
 		2B91EFA129767D3700E2CE40 /* Messenger.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Messenger.entitlements; sourceTree = "<group>"; };
 		2B91EFA2297A93C800E2CE40 /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
@@ -140,6 +142,7 @@
 				2B9AE9802970C7EB00C2CDF4 /* SceneDelegate.swift */,
 				2B9AE9A52970E8B700C2CDF4 /* Extensions.swift */,
 				2B70CBB92973D78100818C0B /* DatabaseManager.swift */,
+				2B2D26F2297DF85000FEFA31 /* StorageManager.swift */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -307,6 +310,7 @@
 				2B9AE9812970C7EB00C2CDF4 /* SceneDelegate.swift in Sources */,
 				2B91EFA3297A93C800E2CE40 /* ChatViewController.swift in Sources */,
 				2B9AE99D2970CC3400C2CDF4 /* PhotoViewerViewController.swift in Sources */,
+				2B2D26F3297DF85000FEFA31 /* StorageManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
