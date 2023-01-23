@@ -210,7 +210,25 @@ class RegisterViewController: UIViewController, UINavigationControllerDelegate {
                     alertContoller.addAction(UIAlertAction(title: "OK", style:UIAlertAction.Style.default , handler: nil))
                     self!.present(alertContoller, animated: true)
                 } else {
-                    DatabaseManager.shared.insertUser(with: chatAppUser(firstName: firstName, lastName: lastName, emailAddress: email))
+                    let chatUser = ChatAppUser(firstName: firstName, lastName: lastName, emailAddress: email)
+                    DatabaseManager.shared.insertUser(with: chatUser, completion: { success in
+                        if success {
+                            //uploadImage
+                            guard let image = strongSelf.imageView.image, let data = image.pngData() else {
+                                return
+                            }
+                            let fileName = chatUser.profilePictureFileName
+                            StorageManager.shared.uploadProfilePicture(with: data, fileName: fileName, completion: { result in
+                                switch result {
+                                case .success(let downloadUrl):
+                                    UserDefaults.standard.set(downloadUrl, forKey: "prodile_picture_url")
+                                    print(downloadUrl)
+                                case .failure(let error):
+                                    print("Storage manager error: \(error)")
+                                }
+                            })
+                        }
+                    })
                     strongSelf.navigationController?.dismiss(animated: true, completion: nil)
                 }
             }
